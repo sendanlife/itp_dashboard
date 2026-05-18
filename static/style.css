@@ -1,0 +1,30 @@
+.search-container {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-bar {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid #D1D5DB;
+            width: 350px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar:focus {
+            border-color: #3B82F6;
+        }
+
+        .latency-metric {
+            font-size: 12px;
+            color: #10B981;
+            font-weight: 600;
+            background: #D1FAE5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: none; /* Hidden until searched */
+        }
