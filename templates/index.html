@@ -218,10 +218,10 @@
                 if (searchInput) searchInput.value = '';
                 if (latencyMetric) latencyMetric.style.display = 'none';
 
-                //grab the target color (safely defaults to 'all' if missing)
+                //grab the target color (if missing then show all cards)
                 const targetColor = tab.getAttribute('data-target') || 'all';
                 
-                //DEBUG TRACKER: Print to console
+                //debug
                 console.log("🎯 Filter clicked! Target color is:", targetColor);
 
                 //filter the cards
@@ -273,28 +273,28 @@
         // ----------------------------------------------------
         // view all chronological logs button
         // ----------------------------------------------------
-        let allLogsOpen = false; // Tracks the global state
+        let allLogsOpen = false;
 
         function toggleAllLogs() {
-            // Grab EVERY panel on the screen
+            //grab EVERY panel on the screen (tried to make it individual panel but cannot so bopes)
             const allPanels = document.querySelectorAll('.history-panel');
             const masterBtn = document.getElementById('globalHistoryBtn');
             
-            // Flip the state
+            
             allLogsOpen = !allLogsOpen; 
 
-            // Loop through all panels and turn them all on, or all off
+            
             allPanels.forEach(panel => {
                 panel.style.display = allLogsOpen ? "block" : "none";
             });
 
-            // Update the master button text
+             //change colour (looks cooler)
             if (allLogsOpen) {
                 masterBtn.innerHTML = "📂 Hide All Logs";
-                masterBtn.style.backgroundColor = "#EF4444"; // Turn red to indicate closing
+                masterBtn.style.backgroundColor = "#EF4444"; //red
             } else {
                 masterBtn.innerHTML = "📂 View All Logs";
-                masterBtn.style.backgroundColor = "#1E293B"; // Turn back to dark blue
+                masterBtn.style.backgroundColor = "#1E293B"; //dark blue
             }
         }
 
@@ -310,14 +310,14 @@
                 readerDiv.style.display = "block";
                 startScanBtn.innerText = "🛑 Stop Scanner";
                 
-                // Initialize the scanner
+                //start scanner
                 html5QrcodeScanner = new Html5QrcodeScanner(
                     "reader", { fps: 10, qrbox: 250 }
                 );
                 
                 html5QrcodeScanner.render(onScanSuccess);
             } else {
-                // Stop the scanner
+                //stop scanner
                 readerDiv.style.display = "none";
                 startScanBtn.innerText = "📷 Start QR Scanner";
                 if (html5QrcodeScanner) {
@@ -327,13 +327,13 @@
         });
 
         function onScanSuccess(decodedText, decodedResult) {
-            // 1. Put the scanned text (e.g., "LRV-1012") into the search bar
+            //put scanned text into search bar
             searchInput.value = decodedText;
             
-            // 2. Manually trigger the search input event to update the UI
+            //manually trigger the search input event to update the UI
             searchInput.dispatchEvent(new Event('input'));
             
-            // 3. Stop scanning after a successful read
+            //stop scanning after a successful read
             html5QrcodeScanner.clear();
             readerDiv.style.display = "none";
             startScanBtn.innerText = "📷 Start QR Scanner";
