@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OptiTrack LRT Dashboard</title>
     <style>
-        /* Linked List Timeline Styling */
+        /* styling for the history panel */
         .history-panel {
             display: none; /* Hidden by default */
             margin-top: 15px;
@@ -23,7 +23,6 @@
             position: relative;
         }
 
-        /* Creates the connecting line between nodes */
         .history-node::before {
             content: '';
             position: absolute;
@@ -35,7 +34,7 @@
         }
         
         .history-node:last-child::before {
-            display: none; /* Removes line after the last node */
+            display: none;
         }
 
         .node-dot {
@@ -86,20 +85,31 @@
 
     <div class="search-container">
         <input type="text" id="searchInput" class="search-bar" placeholder="Enter LRV ID (e.g., LRV-1012)...">
-        <span id="latencyMetric" class="latency-metric">⚡ O(1) Lookup: 0.01ms</span>
+        <span id="latencyMetric" class="latency-metric"></span>
+        
     </div>
 
-    <
+    <div style="margin-bottom: 20px;">
+        <button id="startScanBtn" class="view-history-btn" style="width: 200px; background-color: #3B82F6; color: white;">
+            📷 Start QR Scanner
+        </button>
+        <button id="globalHistoryBtn" class="view-history-btn" style="width: 200px; background-color: #1E293B; color: white;" onclick="toggleAllLogs()">
+            📂 View All Logs
+        </button>
+        <div id="reader" style="width: 400px; display: none; margin-top: 10px; border-radius: 8px; overflow: hidden;"></div>
+    </div>
 
     <div class="tabs">
-        <div class="tab active">Maintenance Alerts • 3</div>
-        <div class="tab">Routine Updates • 1</div>
-        <div class="tab">OCR Manual Review • 1</div>
+        <div class="tab active" data-target="all">All Vehicles • {{ counts.total }}</div>
+        <div class="tab" data-target="red">Maintenance Alerts • {{ counts.red }}</div>
+        <div class="tab" data-target="green">Routine Updates • {{ counts.green }}</div>
+        <div class="tab" data-target="orange">OCR Manual Review • {{ counts.orange }}</div>
     </div>
 
     <div class="grid-container">
         {% for lrv_id, data in lrv_data.items() %}
         <div class="dashboard-card" data-status="{{ data.status }}" data-id="{{ lrv_id }}">
+            
             <div class="card-header">
                 <span>{{ lrv_id }}</span>
                 <span style="color:#A0AEC0; cursor:pointer;">↗</span>
@@ -120,6 +130,19 @@
                 <span style="font-weight: 500;">🧑‍🔧 {{ data.assignee }}</span>
             </div>
             
+            <div class="card-row">
+                <!-- change to sth else for simplicity -->
+                <span class="card-label">OCR Confidence:</span> 
+                
+                <span style="font-weight: 600; 
+                    {% if data.ocr_confidence >= 90 %} color: #10B981; /* Green */
+                    {% elif data.ocr_confidence >= 70 %} color: #F59E0B; /* Orange */
+                    {% else %} color: #EF4444; /* Red */
+                    {% endif %}">
+                    {{ data.ocr_confidence }}% Accuracy
+                </span>
+            </div>
+            
             <div class="attachment-box">
                 <span>📸</span>
                 <div>
@@ -128,11 +151,30 @@
                 </div>
             </div>
 
-            <button class="view-history-btn" onclick="toggleHistory(this)">
-                View Chronological Log ▾
-            </button>
+            <div class="forecast-box">
+                <div class="forecast-header">
+                    <span>NEXT: {{ data.forecast.target }}</span>
+                    {% if data.forecast.days_left != "N/A" %}
+                        <span style="color: #2563EB;">Due in ~{{ data.forecast.days_left }} Days</span>
+                    {% else %}
+                        <span style="color: #EF4444;">Review Needed</span>
+                    {% endif %}
+                </div>
+                
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill 
+                        {% if data.forecast.pct > 90 %} fill-danger 
+                        {% elif data.forecast.pct > 75 %} fill-warn 
+                        {% else %} fill-safe {% endif %}" 
+                        style="width: {{ data.forecast.pct }}%;">
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: #94A3B8; text-align: right; margin-top: 4px;">
+                    Cycle Progress: {{ data.forecast.pct }}%
+                </div>
+            </div>
 
-            <div class="history-panel">
+            <div class="history-panel" style="display: none;">
                 <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #9CA3AF;">NODE TRAVERSAL HISTORY</div>
                 
                 {% if data.history|length > 0 %}
@@ -150,42 +192,59 @@
                 {% endif %}
             </div>
 
-        </div>
-        {% endfor %}
+        </div> {% endfor %}
     </div>
     
     <script>
+        // ==========================================
+        // core variables
+        // ==========================================
         const tabs = document.querySelectorAll('.tab');
         const cards = document.querySelectorAll('.dashboard-card');
+        const searchInput = document.getElementById('searchInput');
+        const latencyMetric = document.getElementById('latencyMetric')
 
+
+        // ----------------------------------------------------
+        // tab filter logic
+        // ----------------------------------------------------
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
+                //highlight the clicked tab
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
-                const tabText = tab.innerText;
 
+                //clear search bar
+                if (searchInput) searchInput.value = '';
+                if (latencyMetric) latencyMetric.style.display = 'none';
+
+                //grab the target color (safely defaults to 'all' if missing)
+                const targetColor = tab.getAttribute('data-target') || 'all';
+                
+                //DEBUG TRACKER: Print to console
+                console.log("🎯 Filter clicked! Target color is:", targetColor);
+
+                //filter the cards
                 cards.forEach(card => {
-                    const status = card.getAttribute('data-status');
+                    const cardColor = card.getAttribute('data-status');
                     
-                    // Updated JavaScript logic to match the new tab names
-                    if (tabText.includes('Maintenance Alerts')) {
-                        card.style.display = (status === 'red') ? 'block' : 'none';
-                    } 
-                    else if (tabText.includes('Routine Updates')) {
-                        card.style.display = (status === 'green') ? 'block' : 'none';
-                    } 
-                    else if (tabText.includes('OCR Manual Review')) {
-                        card.style.display = (status === 'orange') ? 'block' : 'none';
+                    if (targetColor === 'all' || cardColor === targetColor) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
                     }
                 });
             });
         });
 
-        // Instant Hash Map Search Logic
-        const searchInput = document.getElementById('searchInput');
-        const latencyMetric = document.getElementById('latencyMetric');
+        //force filter to run on page load
+        const activeTab = document.querySelector('.tab.active');
+        if (activeTab) activeTab.click();
 
+        
+        // ----------------------------------------------------
+        // search bar logic
+        // ----------------------------------------------------
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toUpperCase();
             
@@ -211,16 +270,78 @@
             });
         });
         
-        function toggleHistory(button) {
-            const panel = button.nextElementSibling;
-            if (panel.style.display === "block") {
-                panel.style.display = "none";
-                button.innerText = "View Chronological Log ▾";
+        // ----------------------------------------------------
+        // view all chronological logs button
+        // ----------------------------------------------------
+        let allLogsOpen = false; // Tracks the global state
+
+        function toggleAllLogs() {
+            // Grab EVERY panel on the screen
+            const allPanels = document.querySelectorAll('.history-panel');
+            const masterBtn = document.getElementById('globalHistoryBtn');
+            
+            // Flip the state
+            allLogsOpen = !allLogsOpen; 
+
+            // Loop through all panels and turn them all on, or all off
+            allPanels.forEach(panel => {
+                panel.style.display = allLogsOpen ? "block" : "none";
+            });
+
+            // Update the master button text
+            if (allLogsOpen) {
+                masterBtn.innerHTML = "📂 Hide All Logs";
+                masterBtn.style.backgroundColor = "#EF4444"; // Turn red to indicate closing
             } else {
-                panel.style.display = "block";
-                button.innerText = "Hide Log ▴";
+                masterBtn.innerHTML = "📂 View All Logs";
+                masterBtn.style.backgroundColor = "#1E293B"; // Turn back to dark blue
             }
         }
+
+        // ----------------------------------------------------
+        // qr code scanner
+        // ----------------------------------------------------
+        const startScanBtn = document.getElementById('startScanBtn');
+        const readerDiv = document.getElementById('reader');
+        let html5QrcodeScanner;
+
+        startScanBtn.addEventListener('click', () => {
+            if (readerDiv.style.display === "none") {
+                readerDiv.style.display = "block";
+                startScanBtn.innerText = "🛑 Stop Scanner";
+                
+                // Initialize the scanner
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader", { fps: 10, qrbox: 250 }
+                );
+                
+                html5QrcodeScanner.render(onScanSuccess);
+            } else {
+                // Stop the scanner
+                readerDiv.style.display = "none";
+                startScanBtn.innerText = "📷 Start QR Scanner";
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.clear();
+                }
+            }
+        });
+
+        function onScanSuccess(decodedText, decodedResult) {
+            // 1. Put the scanned text (e.g., "LRV-1012") into the search bar
+            searchInput.value = decodedText;
+            
+            // 2. Manually trigger the search input event to update the UI
+            searchInput.dispatchEvent(new Event('input'));
+            
+            // 3. Stop scanning after a successful read
+            html5QrcodeScanner.clear();
+            readerDiv.style.display = "none";
+            startScanBtn.innerText = "📷 Start QR Scanner";
+            
+            alert(`✅ Successfully Scanned: ${decodedText}`);
+        }
+
+        // ----------------------------------------------------
 
     </script>   
 </body>
