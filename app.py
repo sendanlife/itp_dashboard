@@ -1,5 +1,5 @@
 import os
-from flask import Flask, json, render_template
+from flask import Flask, json, render_template, redirect, url_for
 
 app = Flask(__name__)
 
@@ -139,7 +139,6 @@ def process_ocr_reading(lrv_id, file_path="ocr_output.txt"):
             lrv_hash_map[lrv_id]["status"] = new_status
             lrv_hash_map[lrv_id]["issue"] = new_issue
             
-            # Update the forecast (assuming your generate_forecast function exists)
             lrv_hash_map[lrv_id]["forecast"] = generate_forecast(formatted_mileage, 130)
 
             save_database()
@@ -157,6 +156,71 @@ def process_ocr_reading(lrv_id, file_path="ocr_output.txt"):
             lrv_hash_map[lrv_id]["mileage"] = "Unknown"
         return False
     
+
+def process_hardware_files(qr_file_path="qr_output.txt", ocr_file_path="ocr_output.txt"):
+    """
+    Reads multiple LRV IDs and mileages line-by-line.
+    Later entries naturally override earlier ones in the Hash Map.
+    """
+    if not os.path.exists(qr_file_path) or not os.path.exists(ocr_file_path):
+        print("🚨 Waiting for hardware files...")
+        return False
+
+    try:
+        with open(qr_file_path, 'r') as q_file:
+            qr_lines = [line.strip().upper() for line in q_file.readlines() if line.strip()]
+
+        with open(ocr_file_path, 'r') as o_file:
+            ocr_lines = [line.strip() for line in o_file.readlines() if line.strip()]
+
+        #check both files have the exact same number of lines
+        if len(qr_lines) != len(ocr_lines):
+            print("🚨 Error: Mismatch in number of lines between QR and OCR files.")
+            return False
+
+        updates_made = False
+
+        #loop through both files line by line simultaneously
+        for lrv_id, raw_reading in zip(qr_lines, ocr_lines):
+            try:
+                mileage_int = int(raw_reading)
+                formatted_mileage = f"{mileage_int:,}"
+
+                new_status, new_issue = maintenance_logic_engine(mileage_int)
+                new_forecast = generate_forecast(formatted_mileage, 130)
+
+                if lrv_id in lrv_hash_map:
+                    lrv_hash_map[lrv_id]["mileage"] = formatted_mileage
+                    lrv_hash_map[lrv_id]["status"] = new_status
+                    lrv_hash_map[lrv_id]["issue"] = new_issue
+                    lrv_hash_map[lrv_id]["forecast"] = new_forecast
+                    
+                    updates_made = True
+                    print(f"✅ Hardware Sync: {lrv_id} updated to {formatted_mileage} km!")
+                else:
+                    print(f"⚠️ LRV {lrv_id} not found in database.")
+
+            except ValueError:
+                print(f"🚨 OCR Parsing Failed for {lrv_id}: Non-number characters detected.")
+                if lrv_id in lrv_hash_map:
+                    lrv_hash_map[lrv_id]["status"] = "orange"
+                    lrv_hash_map[lrv_id]["issue"] = "OCR Parsing Failed - Manual Review Needed"
+                    lrv_hash_map[lrv_id]["mileage"] = "Unknown"
+                    lrv_hash_map[lrv_id]["forecast"] = {"target": "Manual Review Required", "days_left": "N/A", "pct": 0}
+                    updates_made = True
+
+        if updates_made:
+            save_database()
+
+        #remove the temporary files after processing    
+        #os.remove(qr_file_path)
+        #os.remove(ocr_file_path)
+        return True
+
+    except Exception as e:
+        print(f"🚨 Unexpected Error during sync: {e}")
+        return False
+    
 @app.route('/')
 
 def dashboard():
@@ -168,8 +232,14 @@ def dashboard():
     }
     return render_template('index.html', lrv_data=lrv_hash_map, counts=status_counts)
 
+@app.route('/trigger_hardware_sync', methods=['GET'])
+def trigger_hardware_sync():
+    #looks for the files dropped by the camera/QR prototype
+    process_hardware_files("qr_output.txt", "ocr_output.txt")
+    
+    #refreshes the dashboard to show the new data
+    return redirect(url_for('dashboard'))
+
 if __name__ == '__main__':
     load_database()
-    #simulate the QR code scanning and reading the txt file
-    process_ocr_reading("LRV-2044", "ocr_output.txt")
     app.run(debug=True)

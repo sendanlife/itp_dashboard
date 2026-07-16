@@ -93,8 +93,8 @@
         <button id="startScanBtn" class="view-history-btn" style="width: 200px; background-color: #3B82F6; color: white;">
             📷 Start QR Scanner
         </button>
-        <button id="globalHistoryBtn" class="view-history-btn" style="width: 200px; background-color: #1E293B; color: white;" onclick="toggleAllLogs()">
-            📂 View All Logs
+        <button id="triggerSyncBtn" class="view-history-btn" style="width: 200px; background-color: #10B981; color: white;" onclick="window.location.href='/trigger_hardware_sync'">
+            🔄 Trigger Hardware Sync
         </button>
         <div id="reader" style="width: 400px; display: none; margin-top: 10px; border-radius: 8px; overflow: hidden;"></div>
     </div>
@@ -150,7 +150,7 @@
                     <div style="color: #6B7280; font-size: 11px;">Trackside Camera Capture</div>
                 </div>
             </div>
-
+ 
             <div class="forecast-box">
                 <div class="forecast-header">
                     <span>NEXT: {{ data.forecast.target }}</span>
@@ -174,37 +174,18 @@
                 </div>
             </div>
 
-            <div class="historpanel" style="display: none;">
-                <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #9CA3AF;">NODE TRAVERSAL HISTORY</div>
-                
-                {% if data.history|length > 0 %}
-                    {% for node in data.history %}
-                    <div class="history-node">
-                        <div class="node-dot"></div>
-                        <div>
-                            <div style="font-weight: 600; color: #1E1E1E;">{{ node.date }}</div>
-                            <div>{{ node.issue }} ({{ node.mileage }} km)</div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div style="font-size: 13px; color: #9CA3AF;">No previous nodes found in linked list.</div>
-                {% endif %}
-            </div>
-
         </div> {% endfor %}
     </div>
     
+    /* features added: qr code scanner, hardware sync button, and latency metric display */
     <script>
-        // core variables
+        //core variables
         const tabs = document.querySelectorAll('.tab');
         const cards = document.querySelectorAll('.dashboard-card');
         const searchInput = document.getElementById('searchInput');
         const latencyMetric = document.getElementById('latencyMetric')
 
-
-
-        // tab filter logic
+        //tab filter logic
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 //highlight the clicked tab
@@ -240,7 +221,7 @@
 
         
 
-        // search bar logic
+        //search bar logic
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toUpperCase();
             
@@ -257,7 +238,7 @@
             cards.forEach(card => {
                 const cardId = card.getAttribute('data-id').toUpperCase();
                 
-                // If it matches the search, show it. Otherwise, hide it.
+                //if matches, show the card; else hide it
                 if (cardId.includes(searchTerm)) {
                     card.style.display = 'block';
                 } else {
@@ -265,34 +246,8 @@
                 }
             });
         });
-        
-        // view all chronological logs button
-        let allLogsOpen = false;
 
-        function toggleAllLogs() {
-            //grab EVERY panel on the screen (tried to make it individual panel but cannot so bopes)
-            const allPanels = document.querySelectorAll('.history-panel');
-            const masterBtn = document.getElementById('globalHistoryBtn');
-            
-            
-            allLogsOpen = !allLogsOpen; 
-
-            
-            allPanels.forEach(panel => {
-                panel.style.display = allLogsOpen ? "block" : "none";
-            });
-
-             //change colour (looks cooler)
-            if (allLogsOpen) {
-                masterBtn.innerHTML = "📂 Hide All Logs";
-                masterBtn.style.backgroundColor = "#EF4444"; //red
-            } else {
-                masterBtn.innerHTML = "📂 View All Logs";
-                masterBtn.style.backgroundColor = "#1E293B"; //dark blue
-            }
-        }
-
-        // qr code scanner
+        //qr code scanner
         const startScanBtn = document.getElementById('startScanBtn');
         const readerDiv = document.getElementById('reader');
         let html5QrcodeScanner;
