@@ -1,5 +1,5 @@
 import os
-from flask import Flask, json, render_template
+from flask import Flask, json, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
@@ -113,6 +113,53 @@ def maintenance_logic_engine(mileage_int):
         return "green", "Routine Status Update"
     
 
+def calculate_forecast(mileage_int):
+    """
+    Calculates the next maintenance target, percentage progress, 
+    and estimated days left based on the current mileage.
+    """
+    # 1. Define our maintenance thresholds in ascending order
+    thresholds = [
+        (2000, "2k km Visual Inspection"),
+        (13000, "13k km Preventive Cycle"),
+        (40000, "40k km Bogie Inspection"),
+        (120000, "120k km Bogie Overhaul"),
+        (360000, "360k km System Overhaul")
+    ]
+    
+    next_target = "System End of Life"
+    next_threshold_km = 360000
+    prev_threshold_km = 0
+    
+    # 2. Find which cycle the train is currently in
+    for km, label in thresholds:
+        if mileage_int < km:
+            next_target = label
+            next_threshold_km = km
+            break
+        prev_threshold_km = km
+        
+    # 3. Calculate the math for the UI progress bar and days left
+    if mileage_int >= 360000:
+        pct = 100
+        days_left = "0"
+    else:
+        cycle_length = next_threshold_km - prev_threshold_km
+        km_into_cycle = mileage_int - prev_threshold_km
+        
+        # Calculate percentage (0 to 100)
+        pct = int((km_into_cycle / cycle_length) * 100)
+        
+        # Estimate days left (Assuming ~150km traveled per day)
+        km_left = next_threshold_km - mileage_int
+        days_left = str(int(km_left / 150))
+        
+    return {
+        "target": next_target,
+        "days_left": days_left,
+        "pct": pct
+    }
+
 def process_ocr_reading(lrv_id, file_path="ocr_output.txt"):
     """
     Reads the 6-digit OCR output from a text file and updates the LRV Hash Map.
@@ -139,7 +186,6 @@ def process_ocr_reading(lrv_id, file_path="ocr_output.txt"):
             lrv_hash_map[lrv_id]["status"] = new_status
             lrv_hash_map[lrv_id]["issue"] = new_issue
             
-            # Update the forecast (assuming your generate_forecast function exists)
             lrv_hash_map[lrv_id]["forecast"] = generate_forecast(formatted_mileage, 130)
 
             save_database()
@@ -168,8 +214,38 @@ def dashboard():
     }
     return render_template('index.html', lrv_data=lrv_hash_map, counts=status_counts)
 
+@app.route('/update_mileage', methods=['POST'])
+def update_mileage():
+    lrv_id = request.form.get('lrv_id')
+    raw_reading = request.form.get('mileage')
+
+    if not lrv_id or not raw_reading:
+        return redirect(url_for('dashboard'))
+
+    try:
+        mileage_int = int(raw_reading.strip())
+        formatted_mileage = f"{mileage_int:,}"
+        
+        new_status, new_issue = maintenance_logic_engine(mileage_int)
+
+        if lrv_id in lrv_hash_map:
+            lrv_hash_map[lrv_id]["mileage"] = formatted_mileage
+            lrv_hash_map[lrv_id]["status"] = new_status
+            lrv_hash_map[lrv_id]["issue"] = new_issue
+            
+            lrv_hash_map[lrv_id]["forecast"] = calculate_forecast(mileage_int)
+            
+            save_database()
+            
+    except ValueError:
+        if lrv_id in lrv_hash_map:
+            lrv_hash_map[lrv_id]["status"] = "orange"
+            lrv_hash_map[lrv_id]["issue"] = "OCR Parsing Failed - Manual Review Needed"
+            lrv_hash_map[lrv_id]["mileage"] = "Unknown"
+            save_database()
+
+    return redirect(url_for('dashboard')) #refresh the page after updating
+
 if __name__ == '__main__':
     load_database()
-    #simulate the QR code scanning and reading the txt file
-    process_ocr_reading("LRV-2044", "ocr_output.txt")
     app.run(debug=True)

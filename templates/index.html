@@ -174,6 +174,20 @@
                 </div>
             </div>
 
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #E2E8F0;">
+                <form action="/update_mileage" method="POST" style="display: flex; gap: 8px;">
+                    <input type="hidden" name="lrv_id" value="{{ lrv_id }}">
+                    
+                    <input type="number" name="mileage" placeholder="Enter 6-digit OCR" required 
+                           style="flex: 1; padding: 6px; border: 1px solid #CBD5E1; border-radius: 4px; font-size: 12px;">
+                    
+                    <button type="submit" 
+                            style="background-color: #0F172A; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">
+                        Update
+                    </button>
+                </form>
+            </div>
+
             <div class="historpanel" style="display: none;">
                 <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #9CA3AF;">NODE TRAVERSAL HISTORY</div>
                 
