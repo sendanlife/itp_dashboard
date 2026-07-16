@@ -174,7 +174,7 @@
                 </div>
             </div>
 
-            <div class="history-panel" style="display: none;">
+            <div class="historpanel" style="display: none;">
                 <div style="font-size: 12px; font-weight: 600; margin-bottom: 10px; color: #9CA3AF;">NODE TRAVERSAL HISTORY</div>
                 
                 {% if data.history|length > 0 %}
@@ -196,18 +196,15 @@
     </div>
     
     <script>
-        // ==========================================
         // core variables
-        // ==========================================
         const tabs = document.querySelectorAll('.tab');
         const cards = document.querySelectorAll('.dashboard-card');
         const searchInput = document.getElementById('searchInput');
         const latencyMetric = document.getElementById('latencyMetric')
 
 
-        // ----------------------------------------------------
+
         // tab filter logic
-        // ----------------------------------------------------
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 //highlight the clicked tab
@@ -242,9 +239,8 @@
         if (activeTab) activeTab.click();
 
         
-        // ----------------------------------------------------
+
         // search bar logic
-        // ----------------------------------------------------
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toUpperCase();
             
@@ -270,9 +266,7 @@
             });
         });
         
-        // ----------------------------------------------------
         // view all chronological logs button
-        // ----------------------------------------------------
         let allLogsOpen = false;
 
         function toggleAllLogs() {
@@ -298,9 +292,7 @@
             }
         }
 
-        // ----------------------------------------------------
         // qr code scanner
-        // ----------------------------------------------------
         const startScanBtn = document.getElementById('startScanBtn');
         const readerDiv = document.getElementById('reader');
         let html5QrcodeScanner;

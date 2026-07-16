@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+import os
+from flask import Flask, json, render_template
 
 app = Flask(__name__)
 
@@ -65,7 +66,7 @@ def generate_forecast(current_mileage_str, daily_avg_km):
         "pct": progress_pct
     }
 
-#testing dataa
+#testing data
 history_1012 = MaintenanceHistoryLinkedList()
 history_1012.add_scan("22 May 2026", "120k km Bogie Overhaul Reached", "120,050")
 
@@ -75,15 +76,89 @@ history_1088.add_scan("22 May 2026", "13k km Preventive Cycle", "13,015")
 history_3021 = MaintenanceHistoryLinkedList()
 history_3021.add_scan("15 May 2026", "Routine Status Update", "45,200")
 
-#hashmap foer data (fixed values now... change later to be dynamic from DB or OCR input)
-lrv_hash_map = {
-    "LRV-1012": {"issue": "120k km Overhaul Reached", "mileage": "120,050", "status": "red", "assignee": "Syafiq Y.", "file": "hubometer_1012.png", "ocr_confidence": 98, "history": history_1012.to_list(), "forecast": generate_forecast("120,050", 120)},
-    "LRV-2044": {"issue": "OCR Parsing Failed", "mileage": "Unknown", "status": "orange", "assignee": "Javier S.", "file": "raw_cam_2044.png", "ocr_confidence": 14, "history": [], "forecast": generate_forecast("Unknown", 120)},
-    "LRV-1088": {"issue": "13k km Preventive Cycle", "mileage": "13,015", "status": "red", "assignee": "Huizhong L.", "file": "hubometer_1088.png", "ocr_confidence": 89, "history": history_1088.to_list(), "forecast": generate_forecast("13,015", 140)},
-    "LRV-3021": {"issue": "Routine Status Update", "mileage": "45,200", "status": "green", "assignee": "Si Kai O.", "file": "hubometer_3021.png", "ocr_confidence": 99, "history": history_3021.to_list(), "forecast": generate_forecast("45,200", 135)}
-}
+#store data in a hashmap (dynamic)
+lrv_hash_map = {}
 
+def load_database(filepath="database.json"):
+    global lrv_hash_map
+    if os.path.exists(filepath):
+        with open(filepath, 'r') as file:
+            lrv_hash_map = json.load(file)
+            print("✅ Database loaded successfully!")
+    else:
+        print("🚨 database.json not found!")
+
+def save_database(filepath="database.json"):
+    with open(filepath, 'w') as file:
+        #indent=4 makes the JSON file neat
+        json.dump(lrv_hash_map, file, indent=4) 
+        print("💾 Database saved to disk!")
+
+def maintenance_logic_engine(mileage_int):
+    """
+    Compares the mileage against the preventive cycles.
+    Returns the appropriate (status_color, issue_text).
+    """
+    if mileage_int >= 360000:
+        return "red", "360k km System Overhaul"
+    elif mileage_int >= 120000:
+        return "red", "120k km Bogie Overhaul Reached"
+    elif mileage_int >= 40000:
+        return "orange", "40k km Bogie Inspection"
+    elif mileage_int >= 13000:
+        return "orange", "13k km Preventive Cycle"
+    elif mileage_int >= 2000:
+        return "green", "2k km Visual Inspection"
+    else:
+        return "green", "Routine Status Update"
+    
+
+def process_ocr_reading(lrv_id, file_path="ocr_output.txt"):
+    """
+    Reads the 6-digit OCR output from a text file and updates the LRV Hash Map.
+    """
+    if not os.path.exists(file_path):
+        print(f"🚨 File not found: {file_path}")
+        return False
+        
+    try:
+
+        with open(file_path, 'r') as file:
+
+            raw_reading = file.read().strip() 
+            
+        mileage_int = int(raw_reading)
+        
+        formatted_mileage = f"{mileage_int:,}" 
+        
+        new_status, new_issue = maintenance_logic_engine(mileage_int)
+        
+        #update the hash map with the new values
+        if lrv_id in lrv_hash_map:
+            lrv_hash_map[lrv_id]["mileage"] = formatted_mileage
+            lrv_hash_map[lrv_id]["status"] = new_status
+            lrv_hash_map[lrv_id]["issue"] = new_issue
+            
+            # Update the forecast (assuming your generate_forecast function exists)
+            lrv_hash_map[lrv_id]["forecast"] = generate_forecast(formatted_mileage, 130)
+
+            save_database()
+            print(f"✅ SUCCESS: {lrv_id} updated to {formatted_mileage} km! Status: {new_status}")
+            return True
+        else:
+            print(f"⚠️ LRV {lrv_id} not found in database.")
+            return False
+            
+    except ValueError:
+        print("🚨 OCR Parsing Failed: The text file contains non-number characters.")
+        if lrv_id in lrv_hash_map:
+            lrv_hash_map[lrv_id]["status"] = "orange"
+            lrv_hash_map[lrv_id]["issue"] = "OCR Parsing Failed - Manual Review Needed"
+            lrv_hash_map[lrv_id]["mileage"] = "Unknown"
+        return False
+    
 @app.route('/')
+
 def dashboard():
     status_counts = {
         "total": len(lrv_hash_map),
@@ -94,4 +169,7 @@ def dashboard():
     return render_template('index.html', lrv_data=lrv_hash_map, counts=status_counts)
 
 if __name__ == '__main__':
+    load_database()
+    #simulate the QR code scanning and reading the txt file
+    process_ocr_reading("LRV-2044", "ocr_output.txt")
     app.run(debug=True)
