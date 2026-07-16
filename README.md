@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-SIT-green)
 
 ## 📌 Overview
 The Optitrack LRT Maintenance Dashboard is an administrative web interface designed to monitor the health and performance of a Light Rail Transit network. It provides systems engineers with a centralized platform to track hardware states, log system anomalies, and optimize the deployment of maintenance crews across the transit grid.
