@@ -3,56 +3,56 @@
         "assignee": "Syafiq Y.",
         "file": "hubometer_1012.png",
         "forecast": {
-            "days_left": 989,
-            "pct": 46,
-            "target": "360k km System Overhaul"
+            "days_left": 61,
+            "pct": 27,
+            "target": "13k km Preventive Cycle"
         },
         "history": [],
-        "issue": "120k km Bogie Overhaul Reached",
+        "issue": "2k km Visual Inspection",
         "mileage": "5,000",
-        "ocr_confidence": 98,
-        "status": "red"
+        "ocr_confidence": 50,
+        "status": "green"
     },
     "LRV-1088": {
         "assignee": "Huizhong L.",
         "file": "hubometer_1088.png",
         "forecast": {
-            "days_left": "192",
-            "pct": 0,
-            "target": "40k km Bogie Inspection"
+            "days_left": 960,
+            "pct": 47,
+            "target": "360k km System Overhaul"
         },
         "history": [],
-        "issue": "13k km Preventive Cycle",
-        "mileage": "13,015",
-        "ocr_confidence": 89,
+        "issue": "120k km Bogie Overhaul",
+        "mileage": "235,123",
+        "ocr_confidence": 50,
         "status": "red"
     },
     "LRV-2044": {
         "assignee": "Javier S.",
         "file": "raw_cam_2044.png",
         "forecast": {
-            "days_left": 982,
-            "pct": 46,
+            "days_left": "N/A",
+            "pct": 0,
             "target": "360k km System Overhaul"
         },
         "history": [],
         "issue": "120k km Bogie Overhaul Reached",
-        "mileage": "2,000",
-        "ocr_confidence": 14,
-        "status": "red"
+        "mileage": "Unknown",
+        "ocr_confidence": 50,
+        "status": "orange"
     },
     "LRV-3021": {
         "assignee": "Si Kai O.",
         "file": "hubometer_3021.png",
         "forecast": {
-            "days_left": "554",
-            "pct": 6,
+            "days_left": 821,
+            "pct": 55,
             "target": "120k km Bogie Overhaul"
         },
         "history": [],
-        "issue": "Routine Status Update",
-        "mileage": "45,200",
-        "ocr_confidence": 99,
-        "status": "green"
+        "issue": "40k km Bogie Inspection",
+        "mileage": "253,253",
+        "ocr_confidence": 50,
+        "status": "red"
     }
 }
