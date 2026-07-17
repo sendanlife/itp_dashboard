@@ -5,11 +5,11 @@
         "forecast": {
             "days_left": 61,
             "pct": 27,
-            "target": "13k km Preventive Cycle"
+            "target": "2k km Visual Inspection"
         },
         "history": [],
-        "issue": "2k km Visual Inspection",
-        "mileage": "5,000",
+        "issue": "Routine Status Update",
+        "mileage": "1,234",
         "ocr_confidence": 50,
         "status": "green"
     },
@@ -31,15 +31,15 @@
         "assignee": "Javier S.",
         "file": "raw_cam_2044.png",
         "forecast": {
-            "days_left": "N/A",
-            "pct": 0,
-            "target": "360k km System Overhaul"
+            "days_left": 150,
+            "pct": 30,
+            "target": "13k km Prevention Cycle"
         },
         "history": [],
-        "issue": "120k km Bogie Overhaul Reached",
-        "mileage": "Unknown",
+        "issue": "2k km Visual Inspection",
+        "mileage": "2,345",
         "ocr_confidence": 50,
-        "status": "orange"
+        "status": "green"
     },
     "LRV-3021": {
         "assignee": "Si Kai O.",
@@ -51,8 +51,8 @@
         },
         "history": [],
         "issue": "40k km Bogie Inspection",
-        "mileage": "253,253",
+        "mileage": "40,000",
         "ocr_confidence": 50,
-        "status": "red"
+        "status": "orange"
     }
 }
