@@ -117,7 +117,13 @@
             
             <div class="card-row">
                 <span class="card-label">Logic Engine Status:</span>
-                <span style="font-weight: 500;">{{ data.issue }}</span>
+                <span style="font-weight: 600; 
+                    {% if data.get('hardware_fault') == True %}
+                        color: #EF4444; /* Dark Red */
+                    {% else %}
+                        color: #374151; /* Standard Dark Grey for healthy text */
+                    {% endif %}">
+                    {{ data.get('issue', 'Operating Normally') }}
             </div>
             
             <div class="card-row">
@@ -126,29 +132,19 @@
             </div>
             
             <div class="card-row">
-                <span class="card-label">Assigned Technician:</span>
-                <span style="font-weight: 500;">🧑‍🔧 {{ data.assignee }}</span>
-            </div>
-            
-            <div class="card-row">
                 <!-- change to sth else for simplicity -->
                 <span class="card-label">OCR Confidence:</span> 
                 
-                <span style="font-weight: 600; 
-                    {% if data.ocr_confidence >= 90 %} color: #10B981; /* Green */
-                    {% elif data.ocr_confidence >= 70 %} color: #F59E0B; /* Orange */
-                    {% else %} color: #EF4444; /* Red */
+                <span style="font-weight: 600;
+                    {% if data.get('ocr_confidence', 0) >= 90 %}
+                        color: #10B981;
+                    {% elif data.get('ocr_confidence', 0) >= 50 %}
+                        color: #F59E0B;
+                    {% else %}
+                        color: #EF4444;
                     {% endif %}">
-                    {{ data.ocr_confidence }}% Accuracy
+                    {{ data.get('ocr_confidence', 0) }}% Accuracy
                 </span>
-            </div>
-            
-            <div class="attachment-box">
-                <span>📸</span>
-                <div>
-                    <div style="font-weight: 500;">{{ data.file }}</div>
-                    <div style="color: #6B7280; font-size: 11px;">Trackside Camera Capture</div>
-                </div>
             </div>
  
             <div class="forecast-box">

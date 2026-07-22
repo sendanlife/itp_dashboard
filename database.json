@@ -1,58 +1,15 @@
 {
-    "LRV-1012": {
-        "assignee": "Syafiq Y.",
-        "file": "hubometer_1012.png",
+    "LRV-8080": {
+        "consecutive_failures": 0,
         "forecast": {
-            "days_left": 989,
-            "pct": 46,
+            "days_left": 1384,
+            "pct": 25,
             "target": "360k km System Overhaul"
         },
-        "history": [],
+        "hardware_fault": false,
         "issue": "120k km Bogie Overhaul Reached",
-        "mileage": "5,000",
-        "ocr_confidence": 98,
+        "mileage": "180,000",
+        "ocr_confidence": 94,
         "status": "red"
-    },
-    "LRV-1088": {
-        "assignee": "Huizhong L.",
-        "file": "hubometer_1088.png",
-        "forecast": {
-            "days_left": "192",
-            "pct": 0,
-            "target": "40k km Bogie Inspection"
-        },
-        "history": [],
-        "issue": "13k km Preventive Cycle",
-        "mileage": "13,015",
-        "ocr_confidence": 89,
-        "status": "red"
-    },
-    "LRV-2044": {
-        "assignee": "Javier S.",
-        "file": "raw_cam_2044.png",
-        "forecast": {
-            "days_left": 982,
-            "pct": 46,
-            "target": "360k km System Overhaul"
-        },
-        "history": [],
-        "issue": "120k km Bogie Overhaul Reached",
-        "mileage": "2,000",
-        "ocr_confidence": 14,
-        "status": "red"
-    },
-    "LRV-3021": {
-        "assignee": "Si Kai O.",
-        "file": "hubometer_3021.png",
-        "forecast": {
-            "days_left": "554",
-            "pct": 6,
-            "target": "120k km Bogie Overhaul"
-        },
-        "history": [],
-        "issue": "Routine Status Update",
-        "mileage": "45,200",
-        "ocr_confidence": 99,
-        "status": "green"
     }
 }
