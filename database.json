@@ -5,12 +5,12 @@
         "forecast": {
             "days_left": 61,
             "pct": 27,
-            "target": "2k km Visual Inspection"
+            "target": "13k km Preventive Cycle"
         },
         "history": [],
-        "issue": "Routine Status Update",
-        "mileage": "1,234",
-        "ocr_confidence": 50,
+        "issue": "2k km Visual Inspection",
+        "mileage": "5,000",
+        "ocr_confidence": 99,
         "status": "green"
     },
     "LRV-1088": {
@@ -22,37 +22,48 @@
             "target": "360k km System Overhaul"
         },
         "history": [],
-        "issue": "120k km Bogie Overhaul",
+        "issue": "120k km Bogie Overhaul Reached",
         "mileage": "235,123",
-        "ocr_confidence": 50,
+        "ocr_confidence": 90,
         "status": "red"
     },
     "LRV-2044": {
         "assignee": "Javier S.",
         "file": "raw_cam_2044.png",
         "forecast": {
-            "days_left": 150,
-            "pct": 30,
-            "target": "13k km Prevention Cycle"
+            "days_left": "N/A",
+            "pct": 0,
+            "target": "Manual Review Required"
         },
         "history": [],
-        "issue": "2k km Visual Inspection",
-        "mileage": "2,345",
-        "ocr_confidence": 50,
-        "status": "green"
+        "issue": "OCR Parsing Failed - Manual Review Needed",
+        "mileage": "Unknown",
+        "ocr_confidence": 26,
+        "status": "orange"
     },
     "LRV-3021": {
         "assignee": "Si Kai O.",
         "file": "hubometer_3021.png",
         "forecast": {
-            "days_left": 821,
-            "pct": 55,
-            "target": "120k km Bogie Overhaul"
+            "days_left": 46,
+            "pct": 45,
+            "target": "13k km Preventive Cycle"
         },
         "history": [],
-        "issue": "40k km Bogie Inspection",
-        "mileage": "40,000",
-        "ocr_confidence": 50,
-        "status": "orange"
+        "issue": "2k km Visual Inspection",
+        "mileage": "7,000",
+        "ocr_confidence": 95,
+        "status": "green"
+    },
+    "LRV-3024": {
+        "forecast": {
+            "days_left": 821,
+            "pct": 55,
+            "target": "360k km System Overhaul"
+        },
+        "issue": "120k km Bogie Overhaul Reached",
+        "mileage": "253,253",
+        "ocr_confidence": 91,
+        "status": "red"
     }
 }

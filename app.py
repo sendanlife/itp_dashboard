@@ -232,6 +232,10 @@ def process_hardware_files(qr_file_path="qr_output.txt", ocr_file_path="ocr_outp
                 new_status, new_issue = maintenance_logic_engine(mileage_int)
                 new_forecast = generate_forecast(formatted_mileage, 130)
 
+                if lrv_id not in lrv_hash_map:
+                    lrv_hash_map[lrv_id] = {}
+                    print(f"🆕 New vehicle detected! Registering {lrv_id} into the system.")
+
                 if lrv_id in lrv_hash_map:
                     lrv_hash_map[lrv_id]["mileage"] = formatted_mileage
                     lrv_hash_map[lrv_id]["status"] = new_status
