@@ -44,15 +44,15 @@
     "LRV-123": {
         "consecutive_failures": 50,
         "forecast": {
-            "days_left": "N/A",
+            "days_left": 15,
             "pct": 0,
-            "target": "Pending"
+            "target": "2k km Visual Inspection"
         },
         "hardware_fault": true,
-        "issue": "Chronic Scanner Failure - Manual Review Needed",
-        "mileage": "0",
-        "ocr_confidence": 27,
-        "status": "orange",
+        "issue": "Routine Status Update",
+        "mileage": "2",
+        "ocr_confidence": 100,
+        "status": "green",
         "technician": "Si Kai O."
     },
     "LRV-2134": {
@@ -106,7 +106,7 @@
         },
         "hardware_fault": false,
         "issue": "Routine Status Update",
-        "mileage": "78",
+        "mileage": "70",
         "ocr_confidence": 100,
         "status": "green",
         "technician": "Charissa K."

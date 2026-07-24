@@ -197,7 +197,6 @@
 
         //core variables
         const tabs = document.querySelectorAll('.tab');
-        const cards = document.querySelectorAll('.dashboard-card');
         const searchInput = document.getElementById('searchInput');
         const latencyMetric = document.getElementById('latencyMetric')
 
@@ -214,12 +213,12 @@
 
                 //grab the target color (if missing then show all cards)
                 const targetColor = tab.getAttribute('data-target') || 'all';
-                
+                const currentCards = document.querySelectorAll('.dashboard-card');
                 //debug
                 console.log("🎯 Filter clicked! Target color is:", targetColor);
 
                 //filter the cards
-                cards.forEach(card => {
+                currentCards.forEach(card => {
                     const cardColor = card.getAttribute('data-status');
                     
                     if (targetColor === 'all' || cardColor === targetColor) {
@@ -251,7 +250,8 @@
                 tabs[0].classList.add('active'); // Reset to first tab
             }
 
-            cards.forEach(card => {
+            const currentCards = document.querySelectorAll('.dashboard-card');
+            currentCards.forEach(card => {
                 const cardId = card.getAttribute('data-id').toUpperCase();
                 
                 //if matches, show the card; else hide it
