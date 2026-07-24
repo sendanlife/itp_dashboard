@@ -12,6 +12,8 @@ rejected_lrvs = []
 
 app = Flask(__name__)
 
+available_technicians = ["Charissa K.", "Javier S.", "Hui Zhong L.", "Si Kai O.", "Syafiq Y."]
+
 THRESHOLDS = {
     2000: "2k km Visual Inspection",
     13000: "13k km Preventive Cycle",
@@ -92,62 +94,14 @@ def maintenance_logic_engine(mileage_int):
         return "green", "Routine Status Update"
     
 
-def calculate_forecast(mileage_int):
-    """
-    Calculates the next maintenance target, percentage progress, 
-    and estimated days left based on the current mileage.
-    """
-    # 1. Define our maintenance thresholds in ascending order
-    thresholds = [
-        (2000, "2k km Visual Inspection"),
-        (13000, "13k km Preventive Cycle"),
-        (40000, "40k km Bogie Inspection"),
-        (120000, "120k km Bogie Overhaul"),
-        (360000, "360k km System Overhaul")
-    ]
-    
-    next_target = "System End of Life"
-    next_threshold_km = 360000
-    prev_threshold_km = 0
-    
-    # 2. Find which cycle the train is currently in
-    for km, label in thresholds:
-        if mileage_int < km:
-            next_target = label
-            next_threshold_km = km
-            break
-        prev_threshold_km = km
-        
-    # 3. Calculate the math for the UI progress bar and days left
-    if mileage_int >= 360000:
-        pct = 100
-        days_left = "0"
-    else:
-        cycle_length = next_threshold_km - prev_threshold_km
-        km_into_cycle = mileage_int - prev_threshold_km
-        
-        # Calculate percentage (0 to 100)
-        pct = int((km_into_cycle / cycle_length) * 100)
-        
-        # Estimate days left (Assuming ~150km traveled per day)
-        km_left = next_threshold_km - mileage_int
-        days_left = str(int(km_left / 150))
-        
-    return {
-        "target": next_target,
-        "days_left": days_left,
-        "pct": pct
-    }
-    
-
-def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt"):
+def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt", conf_file_path="confidence_log.txt"):
     """
     Reads multiple LRV IDs and mileages line-by-line.
     Later entries naturally override earlier ones in the Hash Map.
     """
-    rejected_lrvs = []
+    global rejected_lrvs
 
-    if not os.path.exists(qr_file_path) or not os.path.exists(ocr_file_path):
+    if not os.path.exists(qr_file_path) or not os.path.exists(ocr_file_path) or not os.path.exists(conf_file_path):
         console.print("[bold red]🚨 Waiting for hardware files...[/bold red]")
         return False
 
@@ -158,20 +112,22 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
         with open(ocr_file_path, 'r') as o_file:
             ocr_lines = [line.strip() for line in o_file.readlines() if line.strip()]
 
-        #check both files have the exact same number of lines
-        if len(qr_lines) != len(ocr_lines):
-            console.print("[bold red]🚨 Error: Mismatch in number of lines between QR and OCR files.[/bold red]")
+        with open(conf_file_path, 'r') as c_file:
+            conf_lines = [line.strip() for line in c_file.readlines() if line.strip()]
+
+        # Check both files have the exact same number of lines
+        if len(qr_lines) != len(ocr_lines) or len(qr_lines) != len(conf_lines):
+            console.print("[bold red]🚨 Error: Mismatch in number of lines between hardware files.[/bold red]")
             return False
 
         updates_made = False
 
-        
-            # loop through both files line by line simultaneously
-        for lrv_id, raw_reading in zip(qr_lines, ocr_lines):
+        # Loop through both files line by line simultaneously
+        for lrv_id, raw_reading, conf_reading in zip(qr_lines, ocr_lines, conf_lines):
 
             clean_lrv_id = lrv_id.strip()
 
-            # 1. QR VALIDATION & SANITISATION
+            # 1. QR SANITISATION & FORMAT VALIDATION
             if not clean_lrv_id or clean_lrv_id.upper() in ["ERROR", "UNKNOWN", "NULL"]:
                 console.print("[bold red]🚨 QR Scanner Error: Failed to extract a valid LRV ID. Skipping entry.[/bold red]")
                 continue
@@ -182,9 +138,11 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
                 continue
 
             # 2. INITIALISE NEW VEHICLES IMMEDIATELY
-            # We do this BEFORE the try block so the vehicle exists even if the OCR scan fails
             if clean_lrv_id not in lrv_hash_map:
+                assigned_tech = random.choice(available_technicians)
+                
                 lrv_hash_map[clean_lrv_id] = {
+                    "technician": assigned_tech,
                     "mileage": "0",
                     "status": "green",
                     "issue": "Routine Status Update",
@@ -193,12 +151,22 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
                     "hardware_fault": False,
                     "ocr_confidence": 0
                 }
-                console.print(Panel(f"Registering {clean_lrv_id} to database.", title="🆕 New Vehicle Detected", style="bold blue"))
+                console.print(Panel(f"Registering {clean_lrv_id} to technician {assigned_tech}.", title="🆕 New Vehicle Detected", style="bold blue"))
+            
+            # Fallback for old database entries that might be missing a technician
+            elif "technician" not in lrv_hash_map[clean_lrv_id]:
+                lrv_hash_map[clean_lrv_id]["technician"] = random.choice(available_technicians)
 
             # 3. ATTEMPT OCR VALIDATION
             try:
                 mileage_int = int(raw_reading)
-                
+
+                try:
+                    conf_float = float(conf_reading)
+                    # If EasyOCR exports a decimal (e.g. 0.95), convert to 95. Otherwise keep as is.
+                    conf_pct = int(conf_float * 100) if conf_float <= 1.0 else int(conf_float)
+                except ValueError:
+                    conf_pct = 0
                 # Logical Bounds Validation
                 if mileage_int < 0 or mileage_int > 1000000:
                     raise ValueError("Out of bounds") 
@@ -210,7 +178,7 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
                     if mileage_int < current_mileage_int:
                         raise ValueError("Mileage anomaly") 
                 
-                # SUCCESS: Reset the failure counter and update data
+                # SUCCESS: Reset the failure counter because we got a good read!
                 lrv_hash_map[clean_lrv_id]["consecutive_failures"] = 0
                 lrv_hash_map[clean_lrv_id]["hardware_fault"] = False
                 
@@ -222,42 +190,33 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
                 lrv_hash_map[clean_lrv_id]["status"] = new_status
                 lrv_hash_map[clean_lrv_id]["issue"] = new_issue
                 lrv_hash_map[clean_lrv_id]["forecast"] = new_forecast
-                lrv_hash_map[clean_lrv_id]["ocr_confidence"] = random.randint(88, 99) 
+                lrv_hash_map[clean_lrv_id]["ocr_confidence"] = conf_pct
                 
                 updates_made = True
                 console.print(f"[bold green]✅ Hardware Sync:[/bold green] [cyan]{clean_lrv_id}[/cyan] updated to [bold]{formatted_mileage} km[/bold]!")
 
             except ValueError as e:
-                # 4. FAILURE LOGIC FOR ALL STRIKES
+                # 4. FAILURE HANDLING (Safely flatted out, no leftover 'else' statements)
                 console.print(f"[bold yellow]⚠️ Scan failed for {clean_lrv_id}. Reason: {e}[/bold yellow]")
                 
-                # Because we initialized above, it is guaranteed to be in the Hash Map
                 lrv_hash_map[clean_lrv_id]["consecutive_failures"] += 1
                 strikes = lrv_hash_map[clean_lrv_id]["consecutive_failures"]
                 
-                # Always update the status to orange for strikes 1 and 2
                 lrv_hash_map[clean_lrv_id]["status"] = "orange"
                 lrv_hash_map[clean_lrv_id]["issue"] = f"OCR Parsing Failed ({strikes}/3) - Manual Review Needed"
                 
-                # Check for critical 3-strike failure
+                # If it fails 3 times in a row, trigger the manual review
                 if strikes >= 3:
                     console.print(f"[bold red]🚨 Chronic Failure Alert: {clean_lrv_id} has failed 3 consecutive scans.[/bold red]")
                     lrv_hash_map[clean_lrv_id]["hardware_fault"] = True
                     lrv_hash_map[clean_lrv_id]["issue"] = "Chronic Scanner Failure - Manual Review Needed"
                     lrv_hash_map[clean_lrv_id]["ocr_confidence"] = random.randint(10, 45)
                 
-                # We MUST set this to True so the database saves the strike!
                 updates_made = True
-            else:
-                console.print(f"[bold yellow]⚠️ Strike {strikes}/3. Ignoring minor glitch.[/bold yellow]")
-                continue # Skip updating the dashboard for Strikes 1 and 2
 
         if updates_made:
             save_database()
 
-        #remove the temporary files after processing    
-        #os.remove(qr_file_path)
-        #os.remove(ocr_file_path)
         return True
 
     except Exception as e:
@@ -278,7 +237,7 @@ def dashboard():
 @app.route('/trigger_hardware_sync', methods=['GET'])
 def trigger_hardware_sync():
     #looks for the files dropped by the camera/QR prototype
-    process_hardware_files("qr_log.txt", "ocr_log.txt")
+    process_hardware_files("qr_log.txt", "ocr_log.txt", "confidence_log.txt")
     
     #refreshes the dashboard to show the new data
     return redirect(url_for('dashboard'))
@@ -302,7 +261,7 @@ def update_mileage():
             lrv_hash_map[lrv_id]["status"] = new_status
             lrv_hash_map[lrv_id]["issue"] = new_issue
             lrv_hash_map[lrv_id]["ocr_confidence"] = 100 #simulate a successful confidence score for the OCR reading
-            lrv_hash_map[lrv_id]["forecast"] = calculate_forecast(mileage_int)
+            lrv_hash_map[lrv_id]["forecast"] = generate_forecast(formatted_mileage, 130)
             
             save_database()
             

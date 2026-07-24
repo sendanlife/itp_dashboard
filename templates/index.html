@@ -131,13 +131,11 @@
                 <span class="text-{{ data.status }}">{{ data.mileage }} km</span>
             </div>
 
-            <p class="mb-1 text-muted">
-            Assigned Technician: 
-            <span class="float-end fw-bold text-dark">
-                👷‍♂️ {{ data.technician }}
-            </span>
-            </p>
-            
+            <div class="card-row">
+                <span class="card-label">Assigned Technician:</span>
+                <span style="float: right; font-weight: bold; color: #212529;">{{ data.technician }}</span>
+            </div>
+                    
             <div class="card-row">
                 <!-- change to sth else for simplicity -->
                 <span class="card-label">OCR Confidence:</span> 
@@ -197,22 +195,6 @@
     <!-- features added: qr code scanner, hardware sync button, and latency metric display -->
     <script>
 
-        document.addEventListener("DOMContentLoaded", function() {
-        // Select the list where Jinja2 injects the broken LRV IDs
-        const faultyList = document.getElementById("faulty-lrv-list");
-        
-        // Check if the list contains any items
-        if (faultyList && faultyList.children.length > 0) {
-        
-        // Initialize the Bootstrap modal
-        var faultModalElement = document.getElementById('hardwareFaultModal');
-        var hardwareFaultModal = new bootstrap.Modal(faultModalElement, {
-            backdrop: 'static', // Prevents closing the modal by clicking outside of it
-            keyboard: false     // Prevents closing the modal by hitting the ESC key
-        });
-      
-      // Show the modal to the technician
-      hardwareFaultModal.show();
         //core variables
         const tabs = document.querySelectorAll('.tab');
         const cards = document.querySelectorAll('.dashboard-card');
@@ -389,7 +371,7 @@
     </ul>
     
     <!-- The inline onclick function immediately hides the warning box -->
-    <button onclick="document.getElementById('transient-warning-box').style.display='none';" style="padding: 8px 16px; background-color: #ffc107; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+    <button onclick="document.getElementById('rejected-alert-box').style.display='none';" style="padding: 8px 16px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
         Dismiss Warning
     </button>
 
