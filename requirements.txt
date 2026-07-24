@@ -2,8 +2,8 @@
 Flask==3.0.0
 
 # Data and Optimization Libraries
-numpy==1.26.0
-pandas==2.1.0
+numpy
+pandas
 
 # If you use any specific pathfinding or tree algorithms
 networkx==3.1
@@ -13,3 +13,6 @@ gunicorn==21.2.0
 
 # Utilities
 python-dotenv==1.0.0
+
+# Logging and Debugging
+rich==14.0.0

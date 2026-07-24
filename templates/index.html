@@ -304,6 +304,64 @@
             alert(`✅ Successfully Scanned: ${decodedText}`);
         }
 
+        // --- SEAMLESS BACKGROUND AUTO-SYNC ---
+        // Runs automatically every 5000 milliseconds (5 seconds)
+        setInterval(() => {
+            
+            // 1. Silently trigger the sync route in the background
+            fetch('/trigger_hardware_sync')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const newDoc = parser.parseFromString(html, 'text/html');
+
+                    // 2. Swap the vehicle cards with the new data
+                    document.querySelector('.grid-container').innerHTML = newDoc.querySelector('.grid-container').innerHTML;
+
+                    // 3. Update tab counts safely (keeps your click events intact)
+                    const oldTabs = document.querySelectorAll('.tab');
+                    const newTabs = newDoc.querySelectorAll('.tab');
+                    oldTabs.forEach((tab, index) => {
+                        if (newTabs[index]) tab.innerHTML = newTabs[index].innerHTML;
+                    });
+
+                    // 4. Swap the warning box lists
+                    const faultyList = document.getElementById('faulty-lrv-list');
+                    const warningList = document.getElementById('warning-lrv-list');
+                    const rejectedList = document.getElementById('rejected-lrv-list');
+                    
+                    if (faultyList) faultyList.innerHTML = newDoc.getElementById('faulty-lrv-list').innerHTML;
+                    if (warningList) warningList.innerHTML = newDoc.getElementById('warning-lrv-list').innerHTML;
+                    if (rejectedList) rejectedList.innerHTML = newDoc.getElementById('rejected-lrv-list').innerHTML;
+
+                    // 5. Check if warning boxes should appear or disappear
+                    document.getElementById('hardware-alert-box').style.display = document.querySelectorAll('.faulty-item').length > 0 ? 'block' : 'none';
+                    document.getElementById('transient-warning-box').style.display = document.querySelectorAll('.warning-item').length > 0 ? 'block' : 'none';
+                    document.getElementById('rejected-alert-box').style.display = document.querySelectorAll('.rejected-item').length > 0 ? 'block' : 'none';
+
+                    // 6. Re-apply active tab filters so vehicles don't suddenly reappear
+                    const activeTab = document.querySelector('.tab.active');
+                    if (activeTab) {
+                        const targetColor = activeTab.getAttribute('data-target') || 'all';
+                        document.querySelectorAll('.dashboard-card').forEach(card => {
+                            if (targetColor === 'all' || card.getAttribute('data-status') === targetColor) {
+                                card.style.display = 'block';
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        });
+                    }
+                    
+                    // 7. Re-apply search bar filtering if the user is currently typing
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput && searchInput.value.length > 0) {
+                        searchInput.dispatchEvent(new Event('input'));
+                    }
+                })
+                .catch(error => console.log("Background sync error:", error));
+                
+        }, 5000);
+
         // ----------------------------------------------------
 
     </script> 

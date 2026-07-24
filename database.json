@@ -1,3 +1,100 @@
 {
-
+    "LRV-1": {
+        "consecutive_failures": 0,
+        "forecast": {
+            "days_left": 135,
+            "pct": 92,
+            "target": "360k km System Overhaul"
+        },
+        "hardware_fault": false,
+        "issue": "120k km Bogie Overhaul Reached",
+        "mileage": "342,323",
+        "ocr_confidence": 95,
+        "status": "red",
+        "technician": "Syafiq Y."
+    },
+    "LRV-10": {
+        "consecutive_failures": 0,
+        "forecast": {
+            "days_left": 989,
+            "pct": 46,
+            "target": "360k km System Overhaul"
+        },
+        "hardware_fault": false,
+        "issue": "120k km Bogie Overhaul Reached",
+        "mileage": "231,313",
+        "ocr_confidence": 92,
+        "status": "red",
+        "technician": "Javier S."
+    },
+    "LRV-108": {
+        "consecutive_failures": 0,
+        "forecast": {
+            "days_left": 960,
+            "pct": 47,
+            "target": "360k km System Overhaul"
+        },
+        "hardware_fault": false,
+        "issue": "120k km Bogie Overhaul Reached",
+        "mileage": "235,123",
+        "ocr_confidence": 94,
+        "status": "red",
+        "technician": "Si Kai O."
+    },
+    "LRV-123": {
+        "consecutive_failures": 30,
+        "forecast": {
+            "days_left": "N/A",
+            "pct": 0,
+            "target": "Pending"
+        },
+        "hardware_fault": true,
+        "issue": "Chronic Scanner Failure - Manual Review Needed",
+        "mileage": "0",
+        "ocr_confidence": 32,
+        "status": "orange",
+        "technician": "Si Kai O."
+    },
+    "LRV-2134": {
+        "consecutive_failures": 30,
+        "forecast": {
+            "days_left": "N/A",
+            "pct": 0,
+            "target": "Pending"
+        },
+        "hardware_fault": true,
+        "issue": "Chronic Scanner Failure - Manual Review Needed",
+        "mileage": "0",
+        "ocr_confidence": 11,
+        "status": "orange",
+        "technician": "Javier S."
+    },
+    "LRV-24163": {
+        "consecutive_failures": 0,
+        "forecast": {
+            "days_left": 1822,
+            "pct": 1,
+            "target": "360k km System Overhaul"
+        },
+        "hardware_fault": false,
+        "issue": "120k km Bogie Overhaul Reached",
+        "mileage": "123,133",
+        "ocr_confidence": 85,
+        "status": "red",
+        "technician": "Syafiq Y."
+    },
+    "LRV-3021": {
+        "consecutive_failures": 0,
+        "forecast": {
+            "days_left": 821,
+            "pct": 55,
+            "target": "360k km System Overhaul"
+        },
+        "hardware_fault": false,
+        "issue": "120k km Bogie Overhaul Reached",
+        "mileage": "253,253",
+        "ocr_confidence": 91,
+        "status": "red",
+        "technician": "Hui Zhong L."
+    }
 }

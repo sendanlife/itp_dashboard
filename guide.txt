@@ -1,0 +1,16 @@
+HOW TO RUN
+
+1. Run pip install -r requirements.txt
+2. Select venv from Command Palette, Python: Select Interpreter
+3. Open new terminal, run py app.py
+4. Ctrl + CLick http://127.0.0.1:5000 from terminal
+
+HOW TO USE
+1. Click "Update" button to extract values from qr_log and ocr_log txt files
+2. Extracted values can be seen on the dashboard:
+    Logic Status Engine: xxxx
+    Hubodometer Mileage: xxxx
+    Assigned Technician: xxxx
+    OCR Confidence: xxxx
+
+3. Click "Update" button whenever new inputs are inputted.

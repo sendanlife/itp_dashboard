@@ -94,14 +94,14 @@ def maintenance_logic_engine(mileage_int):
         return "green", "Routine Status Update"
     
 
-def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt", conf_file_path="confidence_log.txt"):
+def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt"):
     """
     Reads multiple LRV IDs and mileages line-by-line.
     Later entries naturally override earlier ones in the Hash Map.
     """
     global rejected_lrvs
 
-    if not os.path.exists(qr_file_path) or not os.path.exists(ocr_file_path) or not os.path.exists(conf_file_path):
+    if not os.path.exists(qr_file_path) or not os.path.exists(ocr_file_path):
         console.print("[bold red]🚨 Waiting for hardware files...[/bold red]")
         return False
 
@@ -112,18 +112,15 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
         with open(ocr_file_path, 'r') as o_file:
             ocr_lines = [line.strip() for line in o_file.readlines() if line.strip()]
 
-        with open(conf_file_path, 'r') as c_file:
-            conf_lines = [line.strip() for line in c_file.readlines() if line.strip()]
-
         # Check both files have the exact same number of lines
-        if len(qr_lines) != len(ocr_lines) or len(qr_lines) != len(conf_lines):
-            console.print("[bold red]🚨 Error: Mismatch in number of lines between hardware files.[/bold red]")
+        if len(qr_lines) != len(ocr_lines) or len(qr_lines) == 0:
+            console.print(f"[bold red]🚨 Error: Mismatch in number of lines. QR: {len(qr_lines)}, OCR: {len(ocr_lines)}[/bold red]")
             return False
 
         updates_made = False
 
         # Loop through both files line by line simultaneously
-        for lrv_id, raw_reading, conf_reading in zip(qr_lines, ocr_lines, conf_lines):
+        for lrv_id, ocr_payload in zip(qr_lines, ocr_lines):
 
             clean_lrv_id = lrv_id.strip()
 
@@ -135,6 +132,13 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
             if not (clean_lrv_id.startswith("LRV-") and clean_lrv_id[4:].isdigit()):
                 console.print(f"[bold dark_orange]🚨 QR Format Error:[/bold dark_orange] '{clean_lrv_id}' is invalid. Skipping entry.")
                 rejected_lrvs.append(clean_lrv_id)
+                continue
+
+            # Unpack the OCR payload into mileage and confidence
+            try:
+                raw_reading, raw_conf = ocr_payload.split(',')
+            except ValueError:
+                console.print(f"[bold red]🚨 Format Error: OCR payload '{ocr_payload}' is missing a comma.[/bold red]")
                 continue
 
             # 2. INITIALISE NEW VEHICLES IMMEDIATELY
@@ -161,8 +165,9 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
             try:
                 mileage_int = int(raw_reading)
 
+                # Confidence Parsing and Conversion
                 try:
-                    conf_float = float(conf_reading)
+                    conf_float = float(raw_conf.strip())
                     # If EasyOCR exports a decimal (e.g. 0.95), convert to 95. Otherwise keep as is.
                     conf_pct = int(conf_float * 100) if conf_float <= 1.0 else int(conf_float)
                 except ValueError:
@@ -171,7 +176,7 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
                 if mileage_int < 0 or mileage_int > 1000000:
                     raise ValueError("Out of bounds") 
                     
-                # Monotonicity Validation
+                # Monotonicity Validation (check that mileage doesn't decrease)
                 current_mileage_str = lrv_hash_map[clean_lrv_id].get("mileage", "Unknown")
                 if current_mileage_str != "Unknown":
                     current_mileage_int = int(current_mileage_str.replace(",", ""))
@@ -181,11 +186,12 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
                 # SUCCESS: Reset the failure counter because we got a good read!
                 lrv_hash_map[clean_lrv_id]["consecutive_failures"] = 0
                 lrv_hash_map[clean_lrv_id]["hardware_fault"] = False
-                
+
                 formatted_mileage = f"{mileage_int:,}"
                 new_status, new_issue = maintenance_logic_engine(mileage_int)
                 new_forecast = generate_forecast(formatted_mileage, 130)
-                
+
+                # Update the Hash Map with the new validated data
                 lrv_hash_map[clean_lrv_id]["mileage"] = formatted_mileage
                 lrv_hash_map[clean_lrv_id]["status"] = new_status
                 lrv_hash_map[clean_lrv_id]["issue"] = new_issue
@@ -196,12 +202,14 @@ def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt
                 console.print(f"[bold green]✅ Hardware Sync:[/bold green] [cyan]{clean_lrv_id}[/cyan] updated to [bold]{formatted_mileage} km[/bold]!")
 
             except ValueError as e:
-                # 4. FAILURE HANDLING (Safely flatted out, no leftover 'else' statements)
+                # 4. FAILURE HANDLING
                 console.print(f"[bold yellow]⚠️ Scan failed for {clean_lrv_id}. Reason: {e}[/bold yellow]")
-                
+
+                # Increment the consecutive failure counter
                 lrv_hash_map[clean_lrv_id]["consecutive_failures"] += 1
                 strikes = lrv_hash_map[clean_lrv_id]["consecutive_failures"]
-                
+
+                # Update the status and issue in the Hash Map
                 lrv_hash_map[clean_lrv_id]["status"] = "orange"
                 lrv_hash_map[clean_lrv_id]["issue"] = f"OCR Parsing Failed ({strikes}/3) - Manual Review Needed"
                 
@@ -237,7 +245,7 @@ def dashboard():
 @app.route('/trigger_hardware_sync', methods=['GET'])
 def trigger_hardware_sync():
     #looks for the files dropped by the camera/QR prototype
-    process_hardware_files("qr_log.txt", "ocr_log.txt", "confidence_log.txt")
+    process_hardware_files("qr_log.txt", "ocr_log.txt")
     
     #refreshes the dashboard to show the new data
     return redirect(url_for('dashboard'))
