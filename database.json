@@ -96,5 +96,19 @@
         "ocr_confidence": 91,
         "status": "red",
         "technician": "Hui Zhong L."
+    },
+    "LRV-3034": {
+        "consecutive_failures": 0,
+        "forecast": {
+            "days_left": 14,
+            "pct": 3,
+            "target": "2k km Visual Inspection"
+        },
+        "hardware_fault": false,
+        "issue": "Routine Status Update",
+        "mileage": "78",
+        "ocr_confidence": 100,
+        "status": "green",
+        "technician": "Charissa K."
     }
 }

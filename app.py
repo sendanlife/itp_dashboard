@@ -94,7 +94,7 @@ def maintenance_logic_engine(mileage_int):
         return "green", "Routine Status Update"
     
 
-def process_hardware_files(qr_file_path="qr_log.txt", ocr_file_path="ocr_log.txt"):
+def process_hardware_files(qr_file_path="../logs/qr_log.txt", ocr_file_path="../logs/ocr_log.txt"):
     """
     Reads multiple LRV IDs and mileages line-by-line.
     Later entries naturally override earlier ones in the Hash Map.
@@ -245,7 +245,7 @@ def dashboard():
 @app.route('/trigger_hardware_sync', methods=['GET'])
 def trigger_hardware_sync():
     #looks for the files dropped by the camera/QR prototype
-    process_hardware_files("qr_log.txt", "ocr_log.txt")
+    process_hardware_files("../logs/qr_log.txt", "../logs/ocr_log.txt")
     
     #refreshes the dashboard to show the new data
     return redirect(url_for('dashboard'))
@@ -293,7 +293,7 @@ def check_updates():
     Returns True only if the files have been modified since the last check.
     """
     global last_known_mtime
-    hardware_files = ["qr_log.txt", "ocr_log.txt"]
+    hardware_files = ["../logs/qr_log.txt", "../logs/ocr_log.txt"]
     
     latest_mtime = 0
     
