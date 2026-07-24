@@ -130,6 +130,13 @@
                 <span class="card-label">Hubometer Mileage:</span>
                 <span class="text-{{ data.status }}">{{ data.mileage }} km</span>
             </div>
+
+            <p class="mb-1 text-muted">
+            Assigned Technician: 
+            <span class="float-end fw-bold text-dark">
+                👷‍♂️ {{ data.technician }}
+            </span>
+            </p>
             
             <div class="card-row">
                 <!-- change to sth else for simplicity -->
@@ -189,6 +196,23 @@
     
     <!-- features added: qr code scanner, hardware sync button, and latency metric display -->
     <script>
+
+        document.addEventListener("DOMContentLoaded", function() {
+        // Select the list where Jinja2 injects the broken LRV IDs
+        const faultyList = document.getElementById("faulty-lrv-list");
+        
+        // Check if the list contains any items
+        if (faultyList && faultyList.children.length > 0) {
+        
+        // Initialize the Bootstrap modal
+        var faultModalElement = document.getElementById('hardwareFaultModal');
+        var hardwareFaultModal = new bootstrap.Modal(faultModalElement, {
+            backdrop: 'static', // Prevents closing the modal by clicking outside of it
+            keyboard: false     // Prevents closing the modal by hitting the ESC key
+        });
+      
+      // Show the modal to the technician
+      hardwareFaultModal.show();
         //core variables
         const tabs = document.querySelectorAll('.tab');
         const cards = document.querySelectorAll('.dashboard-card');
@@ -300,6 +324,104 @@
 
         // ----------------------------------------------------
 
-    </script>   
+    </script> 
+
+    <!-- Custom 3-Strike Hardware Alert Box -->
+    <div id="hardware-alert-box" style="display: none; border: 2px solid #dc3545; background-color: #f8d7da; color: #842029; padding: 20px; margin-bottom: 20px; border-radius: 5px;">
+        
+        <h4 style="margin-top: 0;">⚠️ Critical Hardware Fault Detected</h4>
+        <p><strong>Immediate Action Required</strong></p>
+        <p>A trackside scanner has failed 3 consecutive OCR reads. Manual review is required for the following vehicle(s):</p>
+        
+        <!-- Jinja2 Loop -->
+        <ul id="faulty-lrv-list">
+            {% for clean_lrv_id, data in lrv_hash_map.items() %}
+                <!-- This checks the specific 3-strike flag from your backend -->
+                {% if data.hardware_fault == True %}
+                    <li class="faulty-item"><strong>{{ clean_lrv_id }}</strong></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        
+        <!-- The inline onclick function immediately hides the alert box -->
+        <button onclick="document.getElementById('hardware-alert-box').style.display='none';" style="padding: 8px 16px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            Acknowledge Alert
+        </button>
+
+    </div>
+
+    <!-- Custom Transient Glitch Warning Box (Strikes 1 and 2) -->
+<div id="transient-warning-box" style="display: none; border: 2px solid #ffc107; background-color: #fff3cd; color: #664d03; padding: 20px; margin-bottom: 20px; border-radius: 5px;">
+    
+    <h4 style="margin-top: 0;">⚠️ Trackside Scanner Glitch Detected</h4>
+    <p><strong>Minor Intervention Monitoring</strong></p>
+    <p>The following vehicle(s) experienced partial OCR reads (Strike 1 or 2). The system retained the last known good data, but please monitor these scanners:</p>
+    
+    <!-- Jinja2 Loop for Strikes 1 and 2 -->
+    <ul id="warning-lrv-list">
+        {% for clean_lrv_id, data in lrv_hash_map.items() %}
+            <!-- Checks if the strike count exists and is between 1 and 2 -->
+            {% if data.consecutive_failures is defined and data.consecutive_failures > 0 and data.consecutive_failures < 3 %}
+                <li class="warning-item">
+                    <strong>{{ clean_lrv_id }}</strong> 
+                    (Current Strikes: {{ data.consecutive_failures }})
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+    
+    
+
+    <!-- Custom Registration Failure Box (Grey) -->
+<div id="rejected-alert-box" style="display: none; border: 2px solid #6c757d; background-color: #e2e3e5; color: #41464b; padding: 20px; margin-bottom: 20px; border-radius: 5px;">
+    
+    <h4 style="margin-top: 0;">⛔ Registration Failed: Unrecognised Vehicle</h4>
+    <p><strong>Corrupted QR Payload Detected</strong></p>
+    <p>The trackside scanner captured the following malformed identifier(s). The system actively rejected the payload to protect the database. Please check the physical QR sticker for damage:</p>
+    
+    <!-- Jinja2 Loop for Rejected Strings -->
+    <ul id="rejected-lrv-list">
+        {% for bad_id in rejected_lrvs %}
+            <li class="rejected-item">
+                <strong>{{ bad_id if bad_id else 'NULL / Empty String' }}</strong>
+            </li>
+        {% endfor %}
+    </ul>
+    
+    <!-- The inline onclick function immediately hides the warning box -->
+    <button onclick="document.getElementById('transient-warning-box').style.display='none';" style="padding: 8px 16px; background-color: #ffc107; color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+        Dismiss Warning
+    </button>
+
+</div>
+
+</div>
+
+    <!-- JavaScript to control visibility of both boxes -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // --- Logic for 3-Strike Critical Alert (Red) ---
+            var faultyItems = document.querySelectorAll('.faulty-item');
+            if (faultyItems.length > 0) {
+                document.getElementById('hardware-alert-box').style.display = 'block';
+            }
+
+            // --- Logic for 1 & 2 Strike Warning (Yellow) ---
+            var warningItems = document.querySelectorAll('.warning-item');
+            if (warningItems.length > 0) {
+                document.getElementById('transient-warning-box').style.display = 'block';
+            }
+
+            // --- Logic for Registration Failure (Grey) ---
+            var rejectedItems = document.querySelectorAll('.rejected-item');
+            if (rejectedItems.length > 0) {
+                document.getElementById('rejected-alert-box').style.display = 'block';
+        }
+            
+        });
+    </script>
+
+    </div>  
 </body>
 </html>
