@@ -94,7 +94,7 @@
             📷 Start QR Scanner
         </button>
         <button id="triggerSyncBtn" class="view-history-btn" style="width: 200px; background-color: #10B981; color: white;" onclick="window.location.href='/trigger_hardware_sync'">
-            🔄 Trigger Hardware Sync
+            🔄 Update Manually
         </button>
         <div id="reader" style="width: 400px; display: none; margin-top: 10px; border-radius: 8px; overflow: hidden;"></div>
     </div>
@@ -304,61 +304,71 @@
             alert(`✅ Successfully Scanned: ${decodedText}`);
         }
 
-        // --- SEAMLESS BACKGROUND AUTO-SYNC ---
-        // Runs automatically every 5000 milliseconds (5 seconds)
+        // --- SEAMLESS BACKGROUND AUTO-SYNC (SMART POLLING) ---
         setInterval(() => {
             
-            // 1. Silently trigger the sync route in the background
-            fetch('/trigger_hardware_sync')
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const newDoc = parser.parseFromString(html, 'text/html');
-
-                    // 2. Swap the vehicle cards with the new data
-                    document.querySelector('.grid-container').innerHTML = newDoc.querySelector('.grid-container').innerHTML;
-
-                    // 3. Update tab counts safely (keeps your click events intact)
-                    const oldTabs = document.querySelectorAll('.tab');
-                    const newTabs = newDoc.querySelectorAll('.tab');
-                    oldTabs.forEach((tab, index) => {
-                        if (newTabs[index]) tab.innerHTML = newTabs[index].innerHTML;
-                    });
-
-                    // 4. Swap the warning box lists
-                    const faultyList = document.getElementById('faulty-lrv-list');
-                    const warningList = document.getElementById('warning-lrv-list');
-                    const rejectedList = document.getElementById('rejected-lrv-list');
+            // 1. Ask the server if the text files have actually changed
+            fetch('/check_updates')
+                .then(response => response.json())
+                .then(data => {
                     
-                    if (faultyList) faultyList.innerHTML = newDoc.getElementById('faulty-lrv-list').innerHTML;
-                    if (warningList) warningList.innerHTML = newDoc.getElementById('warning-lrv-list').innerHTML;
-                    if (rejectedList) rejectedList.innerHTML = newDoc.getElementById('rejected-lrv-list').innerHTML;
+                    // 2. ONLY run the heavy sync if new hardware data was detected
+                    if (data.changed) {
+                        console.log("🔄 Hardware file changes detected! Syncing dashboard...");
+                        
+                        fetch('/trigger_hardware_sync')
+                            .then(response => response.text())
+                            .then(html => {
+                                const parser = new DOMParser();
+                                const newDoc = parser.parseFromString(html, 'text/html');
 
-                    // 5. Check if warning boxes should appear or disappear
-                    document.getElementById('hardware-alert-box').style.display = document.querySelectorAll('.faulty-item').length > 0 ? 'block' : 'none';
-                    document.getElementById('transient-warning-box').style.display = document.querySelectorAll('.warning-item').length > 0 ? 'block' : 'none';
-                    document.getElementById('rejected-alert-box').style.display = document.querySelectorAll('.rejected-item').length > 0 ? 'block' : 'none';
+                                // Swap the vehicle cards
+                                document.querySelector('.grid-container').innerHTML = newDoc.querySelector('.grid-container').innerHTML;
 
-                    // 6. Re-apply active tab filters so vehicles don't suddenly reappear
-                    const activeTab = document.querySelector('.tab.active');
-                    if (activeTab) {
-                        const targetColor = activeTab.getAttribute('data-target') || 'all';
-                        document.querySelectorAll('.dashboard-card').forEach(card => {
-                            if (targetColor === 'all' || card.getAttribute('data-status') === targetColor) {
-                                card.style.display = 'block';
-                            } else {
-                                card.style.display = 'none';
-                            }
-                        });
-                    }
-                    
-                    // 7. Re-apply search bar filtering if the user is currently typing
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput && searchInput.value.length > 0) {
-                        searchInput.dispatchEvent(new Event('input'));
+                                // Update tab counts
+                                const oldTabs = document.querySelectorAll('.tab');
+                                const newTabs = newDoc.querySelectorAll('.tab');
+                                oldTabs.forEach((tab, index) => {
+                                    if (newTabs[index]) tab.innerHTML = newTabs[index].innerHTML;
+                                });
+
+                                // Swap the warning box lists
+                                const faultyList = document.getElementById('faulty-lrv-list');
+                                const warningList = document.getElementById('warning-lrv-list');
+                                const rejectedList = document.getElementById('rejected-lrv-list');
+                                
+                                if (faultyList) faultyList.innerHTML = newDoc.getElementById('faulty-lrv-list').innerHTML;
+                                if (warningList) warningList.innerHTML = newDoc.getElementById('warning-lrv-list').innerHTML;
+                                if (rejectedList) rejectedList.innerHTML = newDoc.getElementById('rejected-lrv-list').innerHTML;
+
+                                // Check if warning boxes should appear or disappear
+                                document.getElementById('hardware-alert-box').style.display = document.querySelectorAll('.faulty-item').length > 0 ? 'block' : 'none';
+                                document.getElementById('transient-warning-box').style.display = document.querySelectorAll('.warning-item').length > 0 ? 'block' : 'none';
+                                document.getElementById('rejected-alert-box').style.display = document.querySelectorAll('.rejected-item').length > 0 ? 'block' : 'none';
+
+                                // Re-apply active tab filters
+                                const activeTab = document.querySelector('.tab.active');
+                                if (activeTab) {
+                                    const targetColor = activeTab.getAttribute('data-target') || 'all';
+                                    document.querySelectorAll('.dashboard-card').forEach(card => {
+                                        if (targetColor === 'all' || card.getAttribute('data-status') === targetColor) {
+                                            card.style.display = 'block';
+                                        } else {
+                                            card.style.display = 'none';
+                                        }
+                                    });
+                                }
+                                
+                                // Re-apply search bar filtering
+                                const searchInput = document.getElementById('searchInput');
+                                if (searchInput && searchInput.value.length > 0) {
+                                    searchInput.dispatchEvent(new Event('input'));
+                                }
+                            })
+                            .catch(error => console.log("Background sync error:", error));
                     }
                 })
-                .catch(error => console.log("Background sync error:", error));
+                .catch(error => console.log("Update check error:", error));
                 
         }, 5000);
 

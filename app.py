@@ -283,6 +283,34 @@ def update_mileage():
 
     return redirect(url_for('dashboard')) #refresh the page after updating
 
+# Global variable to track the last time the files were modified
+last_known_mtime = 0
+
+@app.route('/check_updates', methods=['GET'])
+def check_updates():
+    """
+    Checks the hard drive timestamps of the 2 hardware logs.
+    Returns True only if the files have been modified since the last check.
+    """
+    global last_known_mtime
+    hardware_files = ["qr_log.txt", "ocr_log.txt"]
+    
+    latest_mtime = 0
+    
+    # Check the modification time (mtime) of all existing files
+    for file_path in hardware_files:
+        if os.path.exists(file_path):
+            file_mtime = os.path.getmtime(file_path)
+            if file_mtime > latest_mtime:
+                latest_mtime = file_mtime
+                
+    # If the files are newer than our last check, tell the frontend to update!
+    if latest_mtime > last_known_mtime:
+        last_known_mtime = latest_mtime
+        return {"changed": True}
+        
+    return {"changed": False}
+
 if __name__ == '__main__':
     load_database()
 

@@ -16,13 +16,13 @@
     "LRV-10": {
         "consecutive_failures": 0,
         "forecast": {
-            "days_left": 989,
-            "pct": 46,
+            "days_left": 66,
+            "pct": 96,
             "target": "360k km System Overhaul"
         },
         "hardware_fault": false,
         "issue": "120k km Bogie Overhaul Reached",
-        "mileage": "231,313",
+        "mileage": "351,313",
         "ocr_confidence": 92,
         "status": "red",
         "technician": "Javier S."
@@ -42,7 +42,7 @@
         "technician": "Si Kai O."
     },
     "LRV-123": {
-        "consecutive_failures": 30,
+        "consecutive_failures": 50,
         "forecast": {
             "days_left": "N/A",
             "pct": 0,
@@ -51,12 +51,12 @@
         "hardware_fault": true,
         "issue": "Chronic Scanner Failure - Manual Review Needed",
         "mileage": "0",
-        "ocr_confidence": 32,
+        "ocr_confidence": 27,
         "status": "orange",
         "technician": "Si Kai O."
     },
     "LRV-2134": {
-        "consecutive_failures": 30,
+        "consecutive_failures": 50,
         "forecast": {
             "days_left": "N/A",
             "pct": 0,
@@ -65,7 +65,7 @@
         "hardware_fault": true,
         "issue": "Chronic Scanner Failure - Manual Review Needed",
         "mileage": "0",
-        "ocr_confidence": 11,
+        "ocr_confidence": 13,
         "status": "orange",
         "technician": "Javier S."
     },
